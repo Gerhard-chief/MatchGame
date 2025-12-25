@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Threading.Tasks;
 
 namespace MatchGame
 {
@@ -75,10 +76,11 @@ namespace MatchGame
 			timer.Start();
 		}
 
-		private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
-		{
-			// если игра уже выиграна — любой клик по карточке перезапускает
-			if (matchesFound == 8)
+        private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+
+        {
+            // если игра уже выиграна — любой клик по карточке перезапускает
+            if (matchesFound == 8)
 			{
 				SetUpGame();
 				return;
@@ -96,23 +98,31 @@ namespace MatchGame
 				return;
 			}
 
-			// 2-й клик
-			if (lastTextBlockClicked is null) { findingMatch = false; return; }
-			if (textBlock == lastTextBlockClicked) return; // защита от двойного клика по одной и той же
+            // 2-й клик
+            if (lastTextBlockClicked is null) { findingMatch = false; return; }
+            if (textBlock == lastTextBlockClicked) return;
 
-			if (textBlock.Text == lastTextBlockClicked.Text)
-			{
-				matchesFound++;
-				textBlock.Visibility = Visibility.Hidden;
-			}
-			else
-			{
-				lastTextBlockClicked.Visibility = Visibility.Visible;
-			}
+            // показываем второй (на всякий)
+            textBlock.Visibility = Visibility.Hidden;
 
-			findingMatch = false;
-			lastTextBlockClicked = null;
-		}
+            if (textBlock.Text == lastTextBlockClicked.Text)
+            {
+                matchesFound++;
+                // оба уже Hidden — оставляем
+            }
+            else
+            {
+                // дать игроку увидеть вторую карточку
+                await Task.Delay(500);
+
+                // вернуть обе назад
+                textBlock.Visibility = Visibility.Visible;
+                lastTextBlockClicked.Visibility = Visibility.Visible;
+            }
+
+            findingMatch = false;
+            lastTextBlockClicked = null;
+        }
 
 		private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
 		{
