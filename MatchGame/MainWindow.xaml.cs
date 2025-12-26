@@ -17,8 +17,10 @@ namespace MatchGame
 
 		private TextBlock? lastTextBlockClicked;
 		private bool findingMatch = false;
+        private bool isBusy;
 
-		public MainWindow()
+
+        public MainWindow()
 		{
 			InitializeComponent();
 
@@ -85,8 +87,8 @@ namespace MatchGame
 				SetUpGame();
 				return;
 			}
-
-			if (sender is not TextBlock textBlock) return;
+            if (isBusy) return;
+            if (sender is not TextBlock textBlock) return;
 			if (textBlock == timeTextBlock) return; // страховка
 
 			// 1-й клик
@@ -112,12 +114,18 @@ namespace MatchGame
             }
             else
             {
-                // дать игроку увидеть вторую карточку
-                await Task.Delay(500);
+                isBusy = true;
+                try
+                {
+                    await Task.Delay(500);
+                    textBlock.Visibility = Visibility.Visible;
+                    lastTextBlockClicked.Visibility = Visibility.Visible;
+                }
+                finally
+                {
+                    isBusy = false;
+                }
 
-                // вернуть обе назад
-                textBlock.Visibility = Visibility.Visible;
-                lastTextBlockClicked.Visibility = Visibility.Visible;
             }
 
             findingMatch = false;
