@@ -49,36 +49,41 @@ namespace MatchGame
 			matchesFound = 0;
 			timeTextBlock.Text = "0.0s";
 
-			List<string> animalEmoji = new()
-			{
-				"🐙","🐙",
-				"🐟","🐟",
-				"🐎","🐎",
-				"🐘","🐘",
-				"🐪","🐪",
-				"🦕","🦕",
-				"🦘","🦘",
-				"🦔","🦔",
-			};
-
-			foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>())
-			{
-				if (textBlock == timeTextBlock) continue; // нижний TextBlock не трогаем
-
-				textBlock.Visibility = Visibility.Visible;
-
-				int index = Random.Shared.Next(animalEmoji.Count);
-				textBlock.Text = animalEmoji[index];
-				animalEmoji.RemoveAt(index);
-			}
-
+			isBusy = true;              // пока игра готовится — клики игнорим
 			findingMatch = false;
 			lastTextBlockClicked = null;
 
-			timer.Start();
+			List<string> animalEmoji = new()
+	{
+		"🐙","🐙",
+		"🐟","🐟",
+		"🐎","🐎",
+		"🐘","🐘",
+		"🐪","🐪",
+		"🦕","🦕",
+		"🦘","🦘",
+		"🦔","🦔",
+	};
+
+			foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>())
+			{
+				if (textBlock == timeTextBlock) continue;
+
+				textBlock.Visibility = Visibility.Visible;
+				textBlock.IsHitTestVisible = true;   // на всякий, если потом будем блокировать matched
+				textBlock.Text = "?";                // закрытая карточка
+
+				int index = Random.Shared.Next(animalEmoji.Count);
+				textBlock.Tag = animalEmoji[index];  // прячем эмодзи в Tag
+				animalEmoji.RemoveAt(index);
+			}
+
+			// Игровой таймер пока НЕ стартуем — ты выбрал режим с превью.
+			// На Дне 2 мы покажем все эмодзи на 2 секунды, потом откроем игру и снимем isBusy.
 		}
 
-        private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+
+		private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
 
         {
             // если игра уже выиграна — любой клик по карточке перезапускает
