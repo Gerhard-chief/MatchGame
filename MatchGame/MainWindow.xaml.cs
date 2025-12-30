@@ -117,7 +117,6 @@ namespace MatchGame
         {
             if (isBusy) return;
 
-            // после победы: клик по карточкам = рестарт
             if (matchesFound == 8)
             {
                 SetUpGame();
@@ -127,12 +126,12 @@ namespace MatchGame
             if (sender is not TextBlock textBlock) return;
             if (textBlock == timeTextBlock) return;
 
-            // если уже открыта (не "?") — не даем кликать
-            if (textBlock.Text != "?") return;
+            // кликаем только по закрытым ("?")
+            if (!IsClosed(textBlock)) return;
 
-            // открываем: берем эмодзи из Tag
-            if (textBlock.Tag is not string currentEmoji) return;
-            textBlock.Text = currentEmoji;
+            // открываем карту и получаем её эмодзи
+            if (!TryGetEmoji(textBlock, out string currentEmoji)) return;
+            OpenCard(textBlock);
 
             // 1-й клик пары
             if (!findingMatch)
@@ -143,25 +142,21 @@ namespace MatchGame
             }
 
             // 2-й клик пары
-            if (lastTextBlockClicked is null) { findingMatch = false; return; }
-            if (textBlock == lastTextBlockClicked) return;
+            if (lastTextBlockClicked is null) { ResetTurn(); return; }
 
-            if (lastTextBlockClicked.Tag is not string lastEmoji)
-            {
-                findingMatch = false;
-                lastTextBlockClicked = null;
-                return;
-            }
+            TextBlock first = lastTextBlockClicked; // локальная переменная, уже не nullable
+            if (textBlock == first) return;
+
+            if (!TryGetEmoji(first, out string firstEmoji)) { ResetTurn(); return; }
 
             // совпало
-            if (string.Equals(currentEmoji, lastEmoji, StringComparison.Ordinal))
+            if (string.Equals(currentEmoji, firstEmoji, StringComparison.Ordinal))
             {
                 textBlock.IsHitTestVisible = false;
-                lastTextBlockClicked.IsHitTestVisible = false;
+                first.IsHitTestVisible = false;
 
                 matchesFound++;
-                findingMatch = false;
-                lastTextBlockClicked = null;
+                ResetTurn();
                 return;
             }
 
@@ -170,17 +165,17 @@ namespace MatchGame
             try
             {
                 await Task.Delay(500);
-                textBlock.Text = "?";
-                lastTextBlockClicked.Text = "?";
+                CloseCard(textBlock);
+                CloseCard(first);
             }
             finally
             {
                 isBusy = false;
             }
 
-            findingMatch = false;
-            lastTextBlockClicked = null;
+            ResetTurn();
         }
+
 
         // --- Клик по нижнему тексту ---
         private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
@@ -196,5 +191,27 @@ namespace MatchGame
                 .OfType<TextBlock>()
                 .Where(tb => tb != timeTextBlock);
         }
+        private static bool IsClosed(TextBlock tb) => tb.Text == "?";
+
+        private static bool TryGetEmoji(TextBlock tb, out string emoji)
+        {
+            emoji = tb.Tag as string ?? "";
+            return emoji.Length > 0;
+        }
+
+        private static void CloseCard(TextBlock tb) => tb.Text = "?";
+
+        private static void OpenCard(TextBlock tb)
+        {
+            // Тут мы уверены, что Tag заполнен в SetUpGame()
+            tb.Text = (string)tb.Tag;
+        }
+
+        private void ResetTurn()
+        {
+            findingMatch = false;
+            lastTextBlockClicked = null;
+        }
+
     }
 }
