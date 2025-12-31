@@ -112,73 +112,74 @@ namespace MatchGame
             previewTimer.Start(); // через 2 сек закроем на "?" и начнем таймер
         }
 
-        // --- Клик по карточке ---
-        private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (isBusy) return;
+		// --- Клик по карточке ---
+		private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (isBusy) return;
 
-            if (matchesFound == 8)
-            {
-                SetUpGame();
-                return;
-            }
+			if (matchesFound == 8)
+			{
+				SetUpGame();
+				return;
+			}
 
-            if (sender is not TextBlock textBlock) return;
-            if (textBlock == timeTextBlock) return;
+			if (sender is not TextBlock textBlock) return;
+			if (textBlock == timeTextBlock) return;
 
-            // кликаем только по закрытым ("?")
-            if (!IsClosed(textBlock)) return;
+			// кликаем только по закрытым ("?")
+			if (!IsClosed(textBlock)) return;
 
-            // открываем карту и получаем её эмодзи
-            if (!TryGetEmoji(textBlock, out string currentEmoji)) return;
-            OpenCard(textBlock);
+			// открываем карту и получаем её эмодзи
+			if (!TryGetEmoji(textBlock, out string currentEmoji)) return;
+			OpenCard(textBlock);
 
-            // 1-й клик пары
-            if (!findingMatch)
-            {
-                lastTextBlockClicked = textBlock;
-                findingMatch = true;
-                return;
-            }
+			// 1-й клик пары
+			if (!findingMatch)
+			{
+				lastTextBlockClicked = textBlock;
+				findingMatch = true;
+				return;
+			}
 
-            // 2-й клик пары
-            if (lastTextBlockClicked is null) { ResetTurn(); return; }
+			// 2-й клик пары
+			if (lastTextBlockClicked is null) { ResetTurn(); return; }
 
-            TextBlock first = lastTextBlockClicked; // локальная переменная, уже не nullable
-            if (textBlock == first) return;
+			TextBlock first = lastTextBlockClicked; // локальная переменная, уже не nullable
+			if (textBlock == first) return;
 
-            if (!TryGetEmoji(first, out string firstEmoji)) { ResetTurn(); return; }
+			if (!TryGetEmoji(first, out string firstEmoji)) { ResetTurn(); return; }
 
-            // совпало
-            if (string.Equals(currentEmoji, firstEmoji, StringComparison.Ordinal))
-            {
-                textBlock.IsHitTestVisible = false;
-                first.IsHitTestVisible = false;
+			// совпало
+			if (string.Equals(currentEmoji, firstEmoji, StringComparison.Ordinal))
+			{
+				textBlock.IsHitTestVisible = false;
+				first.IsHitTestVisible = false;
 
-                matchesFound++;
-                ResetTurn();
-                return;
-            }
+				matchesFound++;
+				ResetTurn();
+				return;
+			}
 
-            // не совпало: показать 0.5 сек и закрыть обе
-            isBusy = true;
-            try
-            {
-                await Task.Delay(500);
-                CloseCard(textBlock);
-                CloseCard(first);
-            }
-            finally
-            {
-                isBusy = false;
-            }
+			// не совпало: показать 0.5 сек и закрыть обе
+			isBusy = true;
+			try
+			{
+				await Task.Delay(500);
+				CloseCard(textBlock);
+				CloseCard(first);
+			}
+			finally
+			{
+				isBusy = false;
+			}
 
-            ResetTurn();
-        }
+			ResetTurn();
+		}
 
 
-        // --- Клик по нижнему тексту ---
-        private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+
+		// --- Клик по нижнему тексту ---
+		private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (matchesFound == 8)
                 SetUpGame();
